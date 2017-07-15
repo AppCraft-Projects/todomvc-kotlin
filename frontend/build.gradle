@@ -1,0 +1,33 @@
+apply plugin: 'kotlin2js'
+
+compileKotlin2Js {
+    kotlinOptions.outputFile = "${projectDir}/js/module/todomvc.js"
+    kotlinOptions.suppressWarnings = true
+    kotlinOptions.verbose = true
+    kotlinOptions.moduleKind = "amd"
+    kotlinOptions.sourceMap = true
+}
+
+dependencies {
+    compile("org.jetbrains.kotlin:kotlin-stdlib-js:$kotlinVersion")
+}
+
+compileKotlin2Js.doFirst {
+    // This is necessary beause kotlin2js does not clean up between builds
+    delete "${projectDir}/js/module/"
+}
+
+build.doLast {
+    configurations.compile.each { File file ->
+        copy {
+            includeEmptyDirs = false
+
+            from zipTree(file.absolutePath)
+            into "${projectDir}/js/module"
+            include { fileTreeElement ->
+                def path = fileTreeElement.path
+                path.endsWith(".js") && (path.startsWith("META-INF/resources/") || !path.startsWith("META-INF/"))
+            }
+        }
+    }
+}
