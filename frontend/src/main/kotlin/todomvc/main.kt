@@ -1,6 +1,5 @@
 package todomvc
 
-import org.w3c.dom.*
 import kotlin.browser.document
 
 fun main(args: Array<String>) {
@@ -8,15 +7,15 @@ fun main(args: Array<String>) {
 
     val elements = TodoMVCElements(
             todoRepository = todoRepository,
-            main = document.querySelector(".main") as HTMLElement,
-            footer = document.querySelector(".footer") as HTMLElement,
-            newTodo = document.querySelector(".new-todo") as HTMLInputElement,
-            todoList = document.querySelector(".todo-list") as HTMLUListElement,
-            todoCount = document.querySelector(".todo-count") as HTMLSpanElement,
-            clearCompleted = document.querySelector(".clear-completed") as HTMLButtonElement,
-            toggleAll = document.querySelector(".toggle-all") as HTMLInputElement)
+            main = document.fetchElementBySelector(".main"),
+            footer = document.fetchElementBySelector(".footer"),
+            newTodo = document.fetchElementBySelector(".new-todo"),
+            todoList = document.fetchElementBySelector(".todo-list"),
+            todoCount = document.fetchElementBySelector(".todo-count"),
+            clearCompleted = document.fetchElementBySelector(".clear-completed"),
+            toggleAll = document.fetchElementBySelector(".toggle-all"))
 
     todoRepository.addEmptyListener {
-        elements.toggleMainAndFooter()
+        elements.toggleMainAndFooterVisibility()
     }
 }

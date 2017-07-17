@@ -30,11 +30,7 @@ class TodoRepository(private val todos: MutableMap<Int, Todo> = mutableMapOf()) 
             todos.values.forEach {
                 it.completed = false
                 it.element.removeClass("completed")
-                (it.element.querySelector(".toggle") as HTMLInputElement).let {
-                    val checked = it.defaultChecked
-                    it.checked = checked.not()
-                    it.defaultChecked = checked.not()
-                }
+                it.element.getChildBySelector<HTMLInputElement>(".toggle").toggle()
             }
         } else {
             todos.values
@@ -42,11 +38,7 @@ class TodoRepository(private val todos: MutableMap<Int, Todo> = mutableMapOf()) 
                     .forEach {
                         it.completed = true
                         it.element.addClass("completed")
-                        (it.element.querySelector(".toggle") as HTMLInputElement).let {
-                            val checked = it.defaultChecked
-                            it.checked = checked.not()
-                            it.defaultChecked = checked.not()
-                        }
+                        it.element.getChildBySelector<HTMLInputElement>(".toggle").toggle()
                     }
         }
     }

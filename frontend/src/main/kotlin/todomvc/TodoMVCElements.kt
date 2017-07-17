@@ -5,9 +5,9 @@ import kotlinx.html.dom.create
 import kotlinx.html.js.li
 import org.w3c.dom.*
 import org.w3c.dom.events.KeyboardEvent
-import org.w3c.dom.events.MouseEvent
 import kotlin.browser.document
 import kotlin.dom.addClass
+import kotlin.dom.hasClass
 import kotlin.dom.removeClass
 
 class TodoMVCElements(val todoRepository: TodoRepository,
@@ -20,96 +20,89 @@ class TodoMVCElements(val todoRepository: TodoRepository,
                       val toggleAll: HTMLInputElement) {
 
     var counter = 1
-    var mainAndFooterVisible = true
-    val visibleStates = mapOf(
-            Pair(true, HTMLElement::hide),
-            Pair(false, HTMLElement::show))
 
     init {
-        toggleMainAndFooter()
+        toggleMainAndFooterVisibility()
         clearCompleted.hide()
-        newTodo.addEventListener("keypress", { keyEvent ->
-            if (keyEvent is KeyboardEvent) {
-                if (keyEvent.keyCode == 13) {
-                    addNewTodo(keyEvent)
-                }
-            }
-        }, false)
-        clearCompleted.addEventListener("click", {
+        newTodo.addEnterListener(this::addNewTodo)
+        clearCompleted.addClickListener {
             todoRepository.clearCompleted()
             updateFooter()
-        }, false)
-        toggleAll.addEventListener("click", {
+        }
+        toggleAll.addClickListener {
             todoRepository.toggleCompletedOnAll()
             updateFooter()
-        }, false)
+        }
     }
 
-    fun toggleMainAndFooter() {
-        listOf(main, footer).forEach {
-            visibleStates[mainAndFooterVisible]?.invoke(it)
-        }
-        mainAndFooterVisible = mainAndFooterVisible.not()
+    fun toggleMainAndFooterVisibility() {
+        main.toggleVisible()
+        footer.toggleVisible()
     }
 
     private fun addNewTodo(e: KeyboardEvent) {
-        val text = newTodo.value.trim()
+        val text = newTodo.getTrimmedValue()
         if (text.isNotBlank()) {
             val currCounter = counter
             val todoElement = createTodoListElement(text)
             val todo = Todo(
-                    id = currCounter, // use it then increment it
+                    id = currCounter,
                     task = text,
                     element = todoElement)
 
-            val todoLabel = todoElement.querySelector("label") as HTMLLabelElement
-            val todoEditInput = todoElement.querySelector(".edit") as HTMLInputElement
-            val destroyButton = todoElement.querySelector(".destroy") as HTMLButtonElement
-            val completedCheckbox = todoElement.querySelector(".toggle") as HTMLInputElement
+            val todoLabel = todoElement.getChildBySelector<HTMLLabelElement>("label")
+            val todoEditInput = todoElement.getChildBySelector<HTMLInputElement>(".edit")
+            val destroyButton = todoElement.getChildBySelector<HTMLButtonElement>(".destroy")
+            val completedCheckbox = todoElement.getChildBySelector<HTMLInputElement>(".toggle")
 
-            todoEditInput.addEventListener("keypress", { keyEvent ->
-                if (keyEvent is KeyboardEvent) {
-                    if (keyEvent.keyCode == 13) {
-                        val newTodoText = todoEditInput.value
-                        todoLabel.innerHTML = newTodoText
-                        todo.task = newTodoText
-                        todoElement.removeClass("editing")
-                    }
+            todoEditInput.addBlurListener {
+                if (todoElement.hasClass("editing")) {
+                    finishEditing(todoEditInput, todoLabel, todo, todoElement)
                 }
-            }, false)
-
-            todoLabel.addEventListener("dblclick", { e ->
+            }
+            todoEditInput.addEnterListener {
+                finishEditing(todoEditInput, todoLabel, todo, todoElement)
+            }
+            todoEditInput.addEscapeListener {
+                todoEditInput.clearValue()
+                todoElement.removeClass("editing")
+            }
+            todoLabel.addDoubleClickListener {
                 todoElement.addClass("editing")
-                todoEditInput.value = todoLabel.innerHTML
-                todoEditInput.focus()
-            }, false)
-            destroyButton.addEventListener("click", {
+                todoEditInput.apply {
+                    setValue(todoLabel.getText())
+                    focus()
+                }
+            }
+            destroyButton.addClickListener {
                 todoRepository.deleteTodoById(currCounter)
                 updateFooter()
-            }, false)
-            completedCheckbox.addEventListener("click", {
-                todoRepository.fetchTodoById(currCounter)?.let { todo ->
-                    completedCheckbox.let {
-                        val checked = it.defaultChecked
-                        it.checked = checked.not()
-                        it.defaultChecked = checked.not()
-                    }
-                    todo.completed = todo.completed.not()
-                    if (todo.completed) {
-                        todo.element.addClass("completed")
-                    } else {
-                        todo.element.removeClass("completed")
-                    }
-                    updateFooter()
-                }
-            }, false)
+            }
+            completedCheckbox.addClickListener {
+                completedCheckbox.toggle()
+                todo.toggleCompleted()
+                updateFooter()
+            }
 
             todoRepository.addTodo(todo)
-            newTodo.value = ""
+            newTodo.clearValue()
             todoList.appendChild(todoElement)
+            updateFooter()
+            counter++
         }
-        updateFooter()
-        counter++
+    }
+
+    private fun finishEditing(todoEditInput: HTMLInputElement, todoLabel: HTMLLabelElement, todo: Todo, todoElement: HTMLLIElement) {
+        val newTodoText = todoEditInput.getTrimmedValue()
+        if (newTodoText.isNotBlank()) {
+            todoLabel.setText(newTodoText)
+            todo.task = newTodoText
+        } else {
+            todoRepository.deleteTodoById(todo.id)
+            todoEditInput.clearValue()
+            updateFooter()
+        }
+        todoElement.removeClass("editing")
     }
 
     private fun updateFooter() {
@@ -120,7 +113,7 @@ class TodoMVCElements(val todoRepository: TodoRepository,
         }
         todoRepository.fetchTodoCount().minus(todoRepository.fetchCompletedCount()).let { remaining ->
             val itemStr = if (remaining == 1) "item" else "items"
-            todoCount.innerHTML = "$remaining $itemStr left"
+            todoCount.setText("$remaining $itemStr left")
         }
     }
 
