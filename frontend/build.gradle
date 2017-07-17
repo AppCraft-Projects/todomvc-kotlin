@@ -10,6 +10,7 @@ compileKotlin2Js {
 
 dependencies {
     compile("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    compile("org.jetbrains.kotlinx:kotlinx-html-js:$kotlinxHtmlVersion")
     compile("org.jetbrains.kotlin:kotlin-stdlib-js:$kotlinVersion")
 }
 
