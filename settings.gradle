@@ -1,1 +1,2 @@
 rootProject.name = 'todomvc-kotlin'
+include(":frontend")

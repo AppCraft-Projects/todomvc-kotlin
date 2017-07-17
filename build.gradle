@@ -32,6 +32,18 @@ allprojects {
 	}
 }
 
+
+clean.dependsOn(":frontend:build")
+
+// copies over the generated js files to this project's static resources
+// from the frontend project
+clean.doLast {
+	copy {
+		from project(':frontend').file('js')
+		into file("src/main/resources/static/generated/")
+	}
+}
+
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter-thymeleaf')
 	compile('org.springframework.boot:spring-boot-starter-web')
