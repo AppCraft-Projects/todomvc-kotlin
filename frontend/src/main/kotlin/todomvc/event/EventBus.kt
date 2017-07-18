@@ -6,8 +6,7 @@ import kotlin.reflect.KClass
 object EventBus {
 
     @PublishedApi
-    internal class Subscription<T : Any>(val type: EventType,
-                                         val keys: Set<String>,
+    internal class Subscription<T : Any>(val keys: Set<String>,
                                          val callback: (Event<T>) -> Unit,
                                          val dataType: KClass<T>)
 
@@ -21,7 +20,6 @@ object EventBus {
                                            noinline callback: (Event<T>) -> Unit,
                                            keys: Set<String> = setOf()) {
         subscriptions[type]?.add(Subscription(
-                type = type,
                 keys = keys,
                 callback = callback,
                 dataType = T::class

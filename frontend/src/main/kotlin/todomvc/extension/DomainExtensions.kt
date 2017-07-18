@@ -1,6 +1,6 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package todomvc
+package todomvc.extension
 
 import org.w3c.dom.Document
 import org.w3c.dom.HTMLElement
@@ -22,7 +22,7 @@ fun HTMLElement.addDoubleClickListener(listener: (MouseEvent) -> Unit) {
     }, false)
 }
 
-fun HTMLElement.toggleVisible() {
+fun HTMLElement.toggleVisibility() {
     if (this.style.display == "none") {
         this.style.display = "block"
     } else {
