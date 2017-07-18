@@ -1,0 +1,13 @@
+package todomvc.event
+
+enum class EventType {
+    CLEAR_COMPLETED,
+    ADD_TODO,
+    COMPLETE_TODO,
+    EDIT_TODO,
+    DELETE_TODO,
+    CANCEL_TODO_EDIT,
+    FINISH_TODO_EDIT,
+    TOGGLE_COMPLETED,
+    TODOS_EMPTY_OR_NO_LONGER_EMPTY
+}
