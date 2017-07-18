@@ -10,38 +10,45 @@ import todomvc.event.EventBus
 import todomvc.event.EventType.TODOS_EMPTY_OR_NO_LONGER_EMPTY
 import todomvc.event.EventType.TODO_CHANGED
 import todomvc.extension.fetchElementBySelector
+import todomvc.store.TodoStorage
 import kotlin.browser.document
 
-class TodoController {
+class TodoController(private val todoStorage: TodoStorage) {
 
     private var counter = 1
     private val todos: MutableMap<Int, Pair<Todo, TodoComponent>> = mutableMapOf()
     private val todoList = document.fetchElementBySelector<HTMLUListElement>(".todo-list")
 
+    fun init() {
+        todoStorage.loadTodos().map {
+            println("Loading Todo from local storage: $it")
+            addTodo(it.title, it.id, it.completed)
+            it.id
+        }.max()?.let { maxId ->
+            counter = maxId + 1
+            println("Counter was set to $counter after local storage load.")
+        }
+    }
+
     fun addTodo(text: String) {
         val id = counter
         counter++
-        val todoElement = HtmlComponentFactory.createTodoListElement(text)
-        val todo = Todo(
-                id = id,
-                task = text)
-        todos.put(todo.id, Pair(todo, TodoComponent(todo.id, todoElement)))
-        todoList.appendChild(todoElement)
-        if (todos.size == 1) {
-            emitTodoEmptyEvent() // it was 0 before
-        }
-        emitTodoChangedEvent()
+        addTodo(text, id)
     }
 
     fun editTodo(todoEdit: TodoEdit) {
         todoEdit.let { (id, newText) ->
-            todos[id]?.first?.task = newText
+            todos[id]?.first?.let { todo ->
+                todo.title = newText
+                todoStorage.update(todo)
+            }
         }
         emitTodoChangedEvent()
     }
 
     fun deleteTodoById(id: Int) {
-        todos.remove(id)?.let { (_, todoComponent) ->
+        todos.remove(id)?.let { (todo, todoComponent) ->
+            todoStorage.remove(todo)
             todoComponent.remove()
             if (todos.isEmpty()) {
                 emitTodoEmptyEvent()
@@ -51,7 +58,10 @@ class TodoController {
     }
 
     fun completeTodo(id: Int) {
-        todos[id]?.first?.toggleCompleted()
+        todos[id]?.first?.let { todo ->
+            todo.toggleCompleted()
+            todoStorage.update(todo)
+        }
         emitTodoChangedEvent()
     }
 
@@ -59,6 +69,7 @@ class TodoController {
         if (onlyHasCompletedTodos()) {
             todos.values.forEach { (todo, component) ->
                 todo.completed = false
+                todoStorage.update(todo)
                 component.toggleCompleted()
             }
         } else {
@@ -66,6 +77,7 @@ class TodoController {
                     .filterNot { it.first.completed }
                     .forEach { (todo, component) ->
                         todo.completed = true
+                        todoStorage.update(todo)
                         component.toggleCompleted()
                     }
         }
@@ -76,6 +88,7 @@ class TodoController {
         val idsToRemove = todos.values
                 .filter { it.first.completed }
                 .map { (todo, component) ->
+                    todoStorage.remove(todo)
                     component.remove()
                     todo.id
                 }
@@ -84,6 +97,26 @@ class TodoController {
         }
         if (todos.isEmpty()) {
             emitTodoEmptyEvent()
+        }
+        emitTodoChangedEvent()
+    }
+
+    private fun addTodo(text: String, id: Int, completed: Boolean = false) {
+        val todoElement = HtmlComponentFactory.createTodoListElement(text)
+        val todo = Todo(
+                id = id,
+                title = text,
+                completed = completed)
+
+        val component = TodoComponent(todo.id, todoElement)
+        todos.put(todo.id, Pair(todo, component))
+        todoStorage.create(todo)
+        todoList.appendChild(todoElement)
+        if(completed) {
+            component.toggleCompleted()
+        }
+        if (todos.size == 1) {
+            emitTodoEmptyEvent() // it was 0 before
         }
         emitTodoChangedEvent()
     }

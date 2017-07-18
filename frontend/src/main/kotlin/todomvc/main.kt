@@ -5,9 +5,10 @@ import todomvc.controller.TodoController
 import todomvc.data.TodoEdit
 import todomvc.event.EventBus
 import todomvc.event.EventType
+import todomvc.store.LocalTodoStorage
 
 fun main(args: Array<String>) {
-    val todoController = TodoController()
+    val todoController = TodoController(LocalTodoStorage)
 
     ClearCompletedComponent()
     FooterComponent()
@@ -34,4 +35,6 @@ fun main(args: Array<String>) {
     EventBus.subscribe<Unit>(EventType.CLEAR_COMPLETED, {
         todoController.clearCompleted()
     })
+
+    todoController.init()
 }
