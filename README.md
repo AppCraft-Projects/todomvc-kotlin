@@ -1,6 +1,6 @@
 # TodoMVC Kotlin
 
-This project is an implementation of TodoMVC (without the routing parts). Its only purpose is to show you how to get started with Kotlin on the frontend and it is not intended to be an **absolute** source of truth.
+This project is an implementation of [TodoMVC](http://todomvc.com/) (without the routing parts). Its only purpose is to show you how to get started with Kotlin on the frontend and it is not intended to be an **absolute** source of truth.
 
 ## Usage:
 
